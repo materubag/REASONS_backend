@@ -47,10 +47,12 @@ seeders/*.js.map
 # Docker
 docker-data/
 postgres-data/
-
-# Uploads
-uploads/
 uploads/*
+!uploads/defaults/
+!uploads/defaults/defaultFoto.png
+!uploads/defaults/defaultProyecto.png
+!uploads/defaults/defaultPublicacion.png
+!uploads/defaults/defaultLogo.png
 !uploads/.gitkeep
 # Test results
 test-results/
