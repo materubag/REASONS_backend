@@ -1,28 +1,41 @@
 import { z } from "zod";
 
+const parseOptionalUrl = z.preprocess(
+  (val) => (typeof val === "string" && val.trim() === "" ? null : val),
+  z.string().url().optional().nullable()
+);
+
+const parseOptionalString = z.preprocess(
+  (val) => (typeof val === "string" && val.trim() === "" ? null : val),
+  z.string().optional().nullable()
+);
+
 export const investigadorSchema = z.object({
   nombre: z.string().min(5).max(150),
 
-  orcid: z.string().regex(
-    /^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/,
-    "ORCID inválido"
+  orcid: z.preprocess(
+    (val) => (typeof val === "string" && val.trim() === "" ? null : val),
+    z.string().regex(
+      /^(https?:\/\/orcid\.org\/)?\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/,
+      "ORCID inválido"
+    )
   ),
 
   correo: z.email(),
 
   biografia: z.string().min(20),
 
-  cargo: z.string().min(3),
+  cargo: z.enum(["Director", "Subdirector", "Investigador"]),
 
-  foto: z.string().optional(),
+  foto: parseOptionalString,
 
-  linkedin: z.url().optional(),
+  linkedin: parseOptionalUrl,
 
-  facebook: z.url().optional(),
+  facebook: parseOptionalUrl,
 
-  instagram: z.url().optional(),
+  instagram: parseOptionalUrl,
 
-  telegram: z.string().optional(),
+  telegram: parseOptionalString,
 });
 
 export const investigadorPatchSchema = investigadorSchema.partial().strict();
