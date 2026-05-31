@@ -30,7 +30,8 @@ export const createUploadMiddleware = (uploadFolder: string) => {
   return multer({
     storage,
     limits: {
-      fileSize: 15 * 1024 * 1024, // 15MB máximo
+      fileSize: 15 * 1024 * 1024,  // 15MB máximo para archivos
+      fieldSize: 15 * 1024 * 1024, // 15MB máximo para campos de texto (por ejemplo, descripciones con base64)
     },
   });
 };

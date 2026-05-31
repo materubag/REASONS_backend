@@ -16,6 +16,18 @@ export const grupoInformacionSchema = z.object({
   correo: z.email(),
 
   logo: z.string().optional(),
+
+  metodologia: z.string().optional(),
+
+  portada: z.string().optional(),
+
+  facebook: z.string().optional(),
+
+  instagram: z.string().optional(),
+
+  mainColor: z.string().optional(),
+
+  miniLogo: z.string().optional(),
 });
 
 export const grupoInformacionPatchSchema = grupoInformacionSchema.partial().strict();
