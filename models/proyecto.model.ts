@@ -21,9 +21,9 @@ Proyecto.init(
       allowNull: false,
     },
 
-    objetivos: {
+    descripcionExtendida: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
 
     resultados: {
@@ -32,8 +32,19 @@ Proyecto.init(
 
     imagen: {
       type: DataTypes.STRING,
-      defaultValue: "/uploads/proyectos/default.png",
+      allowNull: true,
     },
+
+    fechaInicio: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+
+    fechaFin: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+
   },
 
   {
