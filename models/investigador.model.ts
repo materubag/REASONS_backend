@@ -1,7 +1,19 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database/sequelize";
 
-class Investigador extends Model {}
+class Investigador extends Model {
+  public id!: number;
+  public nombre!: string;
+  public orcid!: string;
+  public correo!: string;
+  public biografia!: string;
+  public cargo!: string;
+  public foto!: string;
+  public linkedin?: string;
+  public facebook?: string;
+  public instagram?: string;
+  public telegram?: string;
+}
 
 Investigador.init(
   {
