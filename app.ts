@@ -25,7 +25,6 @@ app.use(
   })
 );
 
-// ✅ FIX: Helmet solo en producción, o configuralo correctamente
 if (!isDev) {
   app.use(
     helmet({
