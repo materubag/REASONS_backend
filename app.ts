@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import path from "path";
 
 import routes from "./routes";
+import microsoftAuthRoutes from "./routes/auth.microsoft.routes";
 import swaggerRoutes from "./docs/swagger.routes";
 
 import { notFoundMiddleware } from "./middlewares/notFound.middleware";
@@ -15,10 +16,7 @@ dotenv.config();
 
 const app = express();
 
-const isDev =
-  process.env.IS_DEV === "true" ||
-  process.env.NODE_ENV === "development" ||
-  process.env.npm_lifecycle_event === "dev";
+const isDev = process.env.IS_DEV === "true";
 
 app.use(
   cors({
@@ -54,6 +52,7 @@ if (isDev) {
 }
 
 app.use("/api", routes);
+app.use(microsoftAuthRoutes);
 
 app.get("/", (_req, res) => {
   res.json({

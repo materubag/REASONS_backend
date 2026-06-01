@@ -63,3 +63,30 @@ export const uploadSingle = (fieldName: string) => {
     },
   ];
 };
+
+export const uploadGrupoFiles = () => {
+  const handler = createUploadMiddleware("grupo_informacion").fields([
+    { name: "logo", maxCount: 1 },
+    { name: "portada", maxCount: 1 },
+    { name: "miniLogo", maxCount: 1 },
+  ]);
+
+  return [
+    handler,
+    (req: Request, _res: Response, next: NextFunction) => {
+      if (req.files) {
+        const files = req.files as { [fieldName: string]: Express.Multer.File[] };
+        if (files["logo"] && files["logo"][0]) {
+          req.body.logo = `/uploads/grupo_informacion/${files["logo"][0].filename}`;
+        }
+        if (files["portada"] && files["portada"][0]) {
+          req.body.portada = `/uploads/grupo_informacion/${files["portada"][0].filename}`;
+        }
+        if (files["miniLogo"] && files["miniLogo"][0]) {
+          req.body.miniLogo = `/uploads/grupo_informacion/${files["miniLogo"][0].filename}`;
+        }
+      }
+      return next();
+    },
+  ];
+};

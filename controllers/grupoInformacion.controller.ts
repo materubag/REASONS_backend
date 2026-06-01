@@ -1,19 +1,43 @@
 import { Request, Response } from "express";
 import { calculatePagination, buildPaginationMeta } from "../utils/pagination";
-import { GrupoInformacion } from "../models";
+import { GrupoInformacion, GrupoObjetivo } from "../models";
+
+// Helper to map and maintain 100% backward compatibility with the frontend
+const mapGrupo = (grupo: any) => {
+  if (!grupo) return null;
+  const plain = grupo.toJSON ? grupo.toJSON() : grupo;
+
+  // Reconstruct "objetivosEspecificos" as a single string joined by newlines
+  if (plain.objetivosEspecificosList) {
+    plain.objetivosEspecificos = plain.objetivosEspecificosList.map((o: any) => o.descripcion).join('\n');
+    delete plain.objetivosEspecificosList;
+  } else if (!plain.objetivosEspecificos) {
+    plain.objetivosEspecificos = "";
+  }
+
+  return plain;
+};
 
 export const getGrupoInformacion = async (req: Request, res: Response) => {
   try {
     const { limit, offset, page } = calculatePagination(req.query);
     const { count, rows } = await GrupoInformacion.findAndCountAll({
+      include: [
+        {
+          model: GrupoObjetivo,
+          as: "objetivosEspecificosList",
+        },
+      ],
       order: [["id", "ASC"]],
       limit,
       offset,
     });
 
+    const mappedRows = rows.map(row => mapGrupo(row));
+
     return res.json({
       success: true,
-      data: rows,
+      data: mappedRows,
       meta: buildPaginationMeta(page, limit, count),
     });
   } catch (error) {
@@ -27,7 +51,14 @@ export const getGrupoInformacion = async (req: Request, res: Response) => {
 
 export const getGrupoInformacionById = async (req: Request, res: Response) => {
   try {
-    const grupo = await GrupoInformacion.findByPk(Number(req.params.id));
+    const grupo = await GrupoInformacion.findByPk(Number(req.params.id), {
+      include: [
+        {
+          model: GrupoObjetivo,
+          as: "objetivosEspecificosList",
+        },
+      ],
+    });
 
     if (!grupo) {
       return res.status(404).json({
@@ -36,7 +67,7 @@ export const getGrupoInformacionById = async (req: Request, res: Response) => {
       });
     }
 
-    return res.json({ success: true, data: grupo });
+    return res.json({ success: true, data: mapGrupo(grupo) });
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -48,9 +79,31 @@ export const getGrupoInformacionById = async (req: Request, res: Response) => {
 
 export const createGrupoInformacion = async (req: Request, res: Response) => {
   try {
-    const grupo = await GrupoInformacion.create(req.body);
+    const { objetivosEspecificos, ...grupoData } = req.body;
+    const grupo = await GrupoInformacion.create(grupoData);
 
-    return res.status(201).json({ success: true, data: grupo });
+    if (objetivosEspecificos) {
+      const objArray = typeof objetivosEspecificos === "string"
+        ? objetivosEspecificos.split('\n').map(o => o.trim()).filter(Boolean)
+        : (Array.isArray(objetivosEspecificos) ? objetivosEspecificos : []);
+      await GrupoObjetivo.bulkCreate(
+        objArray.map((descripcion: string) => ({
+          descripcion,
+          grupoId: (grupo as any).id,
+        }))
+      );
+    }
+
+    const grupoConRelaciones = await GrupoInformacion.findByPk((grupo as any).id, {
+      include: [
+        {
+          model: GrupoObjetivo,
+          as: "objetivosEspecificosList",
+        },
+      ],
+    });
+
+    return res.status(201).json({ success: true, data: mapGrupo(grupoConRelaciones) });
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -71,9 +124,34 @@ export const updateGrupoInformacion = async (req: Request, res: Response) => {
       });
     }
 
-    await grupo.update(req.body);
+    const { objetivosEspecificos, ...grupoData } = req.body;
+    await grupo.update(grupoData);
 
-    return res.json({ success: true, data: grupo });
+    if (objetivosEspecificos !== undefined) {
+      await GrupoObjetivo.destroy({ where: { grupoId: Number(req.params.id) } });
+      if (objetivosEspecificos) {
+        const objArray = typeof objetivosEspecificos === "string"
+          ? objetivosEspecificos.split('\n').map(o => o.trim()).filter(Boolean)
+          : (Array.isArray(objetivosEspecificos) ? objetivosEspecificos : []);
+        await GrupoObjetivo.bulkCreate(
+          objArray.map((descripcion: string) => ({
+            descripcion,
+            grupoId: Number(req.params.id),
+          }))
+        );
+      }
+    }
+
+    const grupoConRelaciones = await GrupoInformacion.findByPk(Number(req.params.id), {
+      include: [
+        {
+          model: GrupoObjetivo,
+          as: "objetivosEspecificosList",
+        },
+      ],
+    });
+
+    return res.json({ success: true, data: mapGrupo(grupoConRelaciones) });
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -101,9 +179,34 @@ export const patchGrupoInformacion = async (req: Request, res: Response) => {
       });
     }
 
-    await grupo.update(req.body);
+    const { objetivosEspecificos, ...grupoData } = req.body;
+    await grupo.update(grupoData);
 
-    return res.json({ success: true, data: grupo });
+    if (objetivosEspecificos !== undefined) {
+      await GrupoObjetivo.destroy({ where: { grupoId: Number(req.params.id) } });
+      if (objetivosEspecificos) {
+        const objArray = typeof objetivosEspecificos === "string"
+          ? objetivosEspecificos.split('\n').map(o => o.trim()).filter(Boolean)
+          : (Array.isArray(objetivosEspecificos) ? objetivosEspecificos : []);
+        await GrupoObjetivo.bulkCreate(
+          objArray.map((descripcion: string) => ({
+            descripcion,
+            grupoId: Number(req.params.id),
+          }))
+        );
+      }
+    }
+
+    const grupoConRelaciones = await GrupoInformacion.findByPk(Number(req.params.id), {
+      include: [
+        {
+          model: GrupoObjetivo,
+          as: "objetivosEspecificosList",
+        },
+      ],
+    });
+
+    return res.json({ success: true, data: mapGrupo(grupoConRelaciones) });
   } catch (error) {
     return res.status(500).json({
       success: false,

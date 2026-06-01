@@ -31,6 +31,12 @@ Usuario.init(
       type: DataTypes.ENUM("admin"),
       defaultValue: "admin",
     },
+
+    microsoft_oid: {
+      type: DataTypes.STRING(150),
+      allowNull: true,
+      unique: true,
+    },
   },
 
   {

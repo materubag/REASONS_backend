@@ -33,7 +33,7 @@ Publicacion.init(
 
     portada: {
       type: DataTypes.STRING,
-      defaultValue: "/uploads/publicaciones/default.png",
+      allowNull: true,
     },
 
     doi: {

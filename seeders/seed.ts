@@ -2,11 +2,18 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import { sequelize } from "../config/database";
+import { resetSequences } from "../utils/db";
 import {
   GrupoInformacion,
   Investigador,
   LineaInvestigacion,
   Usuario,
+  Proyecto,
+  Publicacion,
+  GrupoObjetivo,
+  ProyectoObjetivo,
+  ProyectoKeyword,
+  PublicacionKeyword,
 } from "../models";
 import { hashPassword } from "../utils/bcrypt";
 
@@ -23,7 +30,7 @@ async function seed() {
     // =========================
     // USUARIO ADMIN
     // =========================
-    const adminCorreo = "admin@reasons@gmail.com";
+    const adminCorreo = "admin@reasons.com";
     const existingAdmin = await Usuario.findOne({
       where: { correo: adminCorreo },
     });
@@ -50,15 +57,33 @@ async function seed() {
         "REASONS (Research in Engineering and Advanced Sustainable Operations, Nature, and Society) es un grupo de investigación de la Universidad Técnica de Ambato que impulsa soluciones innovadoras en ingeniería con un enfoque de sostenibilidad y compromiso social. Sus líneas de trabajo abarcan operaciones industriales, tecnologías limpias, gestión eficiente de recursos, innovación social y el diseño de sistemas resilientes frente al cambio climático. El grupo busca generar conocimiento científico y aplicado que contribuya al desarrollo sostenible, fortaleciendo la vinculación entre academia, industria, comunidad y naturaleza. Además, promueve la formación de talento humano en ingeniería con visión ética y ambiental, orientado a responder a los desafíos locales y globales. Su propósito es consolidarse como un referente que conecta ciencia, sociedad y naturaleza en la construcción de un futuro sostenible.",
       objetivoGeneral:
         "Desarrollar investigación aplicada e interdisciplinaria en el campo de la ingeniería para promover operaciones que integren la preservación de la naturaleza, la innovación tecnológica y el bienestar de la sociedad.",
-      objetivosEspecificos:
-        "1. Diseñar y optimizar procesos orientados a la eficiencia, el uso responsable de recursos y la reducción de impactos ambientales.\n2. Generar proyectos de investigación y vinculación que fortalezcan la relación entre academia, industria y comunidades, aportando soluciones sostenibles a problemáticas locales y globales.\n3. Formar profesionales e investigadores en ingeniería con visión ética, ambiental y social, capaces de liderar iniciativas que impulsen el desarrollo sostenible.",
       dominio:
         "Optimización de los Sistemas Productivos, Diseño y Desarrollo Urbanístico de la Facultad de Ingeniería en Sistemas, Electrónica e Industrial.",
       direccion:
         "Av. de Los Chasquis y Av. Río Payamino. Facultad de Ingeniería en Sistemas, Electrónica e Industrial. Universidad Técnica de Ambato. Ambato – Ecuador.",
       correo: "reasons@uta.edu.ec",
       logo: DEFAULT_LOGO,
+      metodologia: "Nuestra metodología se basa en un enfoque interdisciplinario que combina el modelado analítico, la optimización de procesos industriales, el análisis de ciclo de vida de los materiales y la recopilación de datos microclimáticos en tiempo real.",
+      portada: "/uploads/defaults/defaultProyecto.png",
+      facebook: "https://facebook.com",
+      instagram: "https://instagram.com",
+      mainColor: "#006633",
+      miniLogo: "/Logo_sin_fondo.png",
     });
+
+    // Seed specific objectives of the group
+    await GrupoObjetivo.destroy({ where: { grupoId: 1 } });
+    const grupoObjetivos = [
+      "1. Diseñar y optimizar procesos orientados a la eficiencia, el uso responsable de recursos y la reducción de impactos ambientales.",
+      "2. Generar proyectos de investigación y vinculación que fortalezcan la relación entre academia, industria y comunidades, aportando soluciones sostenibles a problemáticas locales y globales.",
+      "3. Formar profesionales e investigadores en ingeniería con visión ética, ambiental y social, capaces de liderar iniciativas que impulsen el desarrollo sostenible."
+    ];
+    await GrupoObjetivo.bulkCreate(
+      grupoObjetivos.map(descripcion => ({
+        descripcion,
+        grupoId: 1,
+      }))
+    );
 
     // =========================
     // LÍNEAS DE INVESTIGACIÓN
@@ -252,6 +277,120 @@ async function seed() {
     for (const investigador of investigadores) {
       await Investigador.upsert(investigador);
     }
+
+    // =========================
+    // PROYECTOS Y PUBLICACIONES SEED
+    // =========================
+    console.log("Seedeando Proyectos y Publicaciones...");
+
+    const proyectos = [
+      {
+        id: 1,
+        titulo: "Urban Heat Island Mitigation Strategies",
+        descripcion: "This longitudinal study investigates the efficacy of integrated green infrastructure in high-density urban corridors. By deploying a network of micro-climate sensors across three metropolitan areas, we are developing predictive models to assess cooling potential.",
+        resultados: "Initial data indicates a 2.4°C average reduction in ambient temperature within 50 meters of high-density green roofing installations during peak summer months.",
+        imagen: "/uploads/proyectos/default.png",
+        fechaInicio: "2023-01-15",
+        fechaFin: "2025-12-31",
+        objetivosSeed: [
+          "1. Quantify surface temperature variance",
+          "2. Model airflow impedance of varying vegetation",
+          "3. Develop actionable zoning guidelines"
+        ],
+        keywordsSeed: ["Sustainability", "Urban Heat", "Green Infrastructure"]
+      },
+      {
+        id: 2,
+        titulo: "Proyecto de Prueba Sin Imagen Opcional",
+        descripcion: "Este es un proyecto secundario de prueba diseñado para validar el comportamiento del frontend cuando no se especifica una imagen. El contenedor de imagen debe ocultarse por completo y este bloque de texto debe expandirse al 100% de la pantalla de forma fluida y elegante.",
+        resultados: "Se validó exitosamente la adaptabilidad visual de la rejilla y los detalles de los proyectos sin recursos gráficos vinculados.",
+        imagen: null,
+        fechaInicio: "2024-02-01",
+        fechaFin: "2026-06-30",
+        objetivosSeed: [
+          "1. Comprobar la ausencia de imagen en base de datos",
+          "2. Ajustar el ancho del bloque de texto dinámicamente",
+          "3. Conservar la estética limpia de la plataforma REASONS"
+        ],
+        keywordsSeed: ["Diseño Adaptativo", "Prueba Null", "Sin Imagen"]
+      }
+    ];
+
+    for (const proyecto of proyectos) {
+      const { objetivosSeed, keywordsSeed, ...proyectoData } = proyecto;
+      await Proyecto.upsert(proyectoData);
+      const instance = await Proyecto.findByPk(proyecto.id);
+      if (instance) {
+        if (proyecto.id === 1) {
+          await (instance as any).setInvestigadores([1, 2]);
+          await (instance as any).setLineas([1, 2, 3]);
+        } else if (proyecto.id === 2) {
+          await (instance as any).setInvestigadores([3, 4]);
+          await (instance as any).setLineas([1, 2]);
+        }
+
+        // Seed objectives
+        await ProyectoObjetivo.destroy({ where: { proyectoId: proyecto.id } });
+        await ProyectoObjetivo.bulkCreate(
+          objetivosSeed.map(descripcion => ({ descripcion, proyectoId: proyecto.id }))
+        );
+
+        // Seed keywords
+        await ProyectoKeyword.destroy({ where: { proyectoId: proyecto.id } });
+        await ProyectoKeyword.bulkCreate(
+          keywordsSeed.map(nombre => ({ nombre, proyectoId: proyecto.id }))
+        );
+      }
+    }
+
+    const publicaciones = [
+      {
+        id: 1,
+        titulo: "Optimizing Renewable Energy Integration in Urban Grids: A Multi-Variable Analysis",
+        autores: "Dr. E. Carter, A. Rodriguez, S. Patel",
+        resumen: "This study presents a novel framework for integrating diverse renewable energy sources into existing urban power grids. By analyzing multi-variable data from three major metropolitan areas, we identify key bottlenecks in current infrastructural models and propose algorithmic adjustments to load balancing that improve efficiency by up to 18%. The findings offer a scalable solution for municipalities transitioning to sustainable energy policies.",
+        cita: "Carter, E., et al. (2024). Journal of Sustainable Engineering, 42(3), 112-128.",
+        portada: "/uploads/publicaciones/default.png",
+        doi: "10.1016/j.jse.2024.03.012",
+        url: "https://example.org/renewable-energy-integration",
+        // Relational field to seed in child table
+        keywordsSeed: ["Renewable Energy", "Smart Grids", "Urban Infrastructure"]
+      },
+      {
+        id: 2,
+        titulo: "Publicación Científica de Prueba Sin Portada Asociada",
+        autores: "Dr. Israel Naranjo Chiriboga, Franklin Tigre Ortega",
+        resumen: "Esta publicación secundaria de prueba no contiene ninguna imagen de portada registrada en la base de datos. Sirve para constatar que el diseño horizontal y de rejilla en el frontend colapsa elegantemente el espacio lateral reservado para la portada y optimiza el espaciado y la lectura del abstract y cita de la investigación.",
+        cita: "Naranjo, I., & Tigre, F. (2025). Revista de Innovación Sostenible REASONS, 3(1), 12-25.",
+        portada: null,
+        doi: "10.5281/zenodo.reasons.2025.02",
+        url: "https://orcid.org/0000-0001-5774-1879",
+        keywordsSeed: ["Prueba de Portada", "Layout Flexible", "REASONS"]
+      }
+    ];
+
+    for (const publicacion of publicaciones) {
+      const { keywordsSeed, ...publicacionData } = publicacion;
+      await Publicacion.upsert(publicacionData);
+      const instance = await Publicacion.findByPk(publicacion.id);
+      if (instance) {
+        if (publicacion.id === 1) {
+          await (instance as any).setInvestigadores([3]);
+          await (instance as any).setLineas([1, 2, 3]);
+        } else if (publicacion.id === 2) {
+          await (instance as any).setInvestigadores([1, 2]);
+          await (instance as any).setLineas([1, 3]);
+        }
+
+        // Seed keywords
+        await PublicacionKeyword.destroy({ where: { publicacionId: publicacion.id } });
+        await PublicacionKeyword.bulkCreate(
+          keywordsSeed.map(nombre => ({ nombre, publicacionId: publicacion.id }))
+        );
+      }
+    }
+
+    await resetSequences(sequelize);
 
     console.log("Seed completado correctamente");
     process.exit(0);

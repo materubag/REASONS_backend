@@ -48,6 +48,16 @@ export const getInvestigadorById = async (req: Request, res: Response) => {
 
 export const createInvestigador = async (req: Request, res: Response) => {
 	try {
+		if (req.body.cargo === "Director" || req.body.cargo === "Subdirector") {
+			const existing = await Investigador.findOne({ where: { cargo: req.body.cargo } });
+			if (existing) {
+				return res.status(400).json({
+					success: false,
+					message: `Ya existe un ${req.body.cargo.toLowerCase()} registrado en el sistema. Solo se permite uno.`,
+				});
+			}
+		}
+
 		const investigador = await Investigador.create(req.body);
 
 		return res.status(201).json({ success: true, data: investigador });
@@ -69,6 +79,16 @@ export const updateInvestigador = async (req: Request, res: Response) => {
 				success: false,
 				message: "Investigador no encontrado",
 			});
+		}
+
+		if (req.body.cargo === "Director" || req.body.cargo === "Subdirector") {
+			const existing = await Investigador.findOne({ where: { cargo: req.body.cargo } });
+			if (existing && existing.id !== Number(req.params.id)) {
+				return res.status(400).json({
+					success: false,
+					message: `Ya existe un ${req.body.cargo.toLowerCase()} registrado en el sistema. Solo se permite uno.`,
+				});
+			}
 		}
 
 		await investigador.update(req.body);
@@ -99,6 +119,16 @@ export const patchInvestigador = async (req: Request, res: Response) => {
 				success: false,
 				message: "Investigador no encontrado",
 			});
+		}
+
+		if (req.body.cargo === "Director" || req.body.cargo === "Subdirector") {
+			const existing = await Investigador.findOne({ where: { cargo: req.body.cargo } });
+			if (existing && existing.id !== Number(req.params.id)) {
+				return res.status(400).json({
+					success: false,
+					message: `Ya existe un ${req.body.cargo.toLowerCase()} registrado en el sistema. Solo se permite uno.`,
+				});
+			}
 		}
 
 		await investigador.update(req.body);
