@@ -9,6 +9,7 @@ import { connectDB, sequelize } from "./config/database";
 import { resetSequences } from "./utils/db";
 
 const PORT = process.env.PORT || 3000;
+
 const startServer = async () => {
   try {
     await connectDB();

@@ -25,11 +25,14 @@ app.use(
   })
 );
 
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-  })
-);
+// Solo usa helmet en producción
+if (!isDev) {
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+    })
+  );
+}
 
 app.use(
   rateLimit({
