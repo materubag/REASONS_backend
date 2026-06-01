@@ -25,18 +25,11 @@ app.use(
   })
 );
 
+// Solo usa helmet en producción
 if (!isDev) {
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: "cross-origin" },
-    })
-  );
-} else {
-  // En desarrollo, usa helmet sin CSP restrictiva
-  app.use(
-    helmet({
-      crossOriginResourcePolicy: { policy: "cross-origin" },
-      contentSecurityPolicy: false, // ← Permite Swagger
     })
   );
 }
