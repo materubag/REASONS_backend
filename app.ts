@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
+import { verifyToken } from "./utils/jwt";
 import path from "path";
 
 import routes from "./routes";
@@ -34,7 +35,18 @@ app.use(
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 200,
+    max: 1000, // 1000 requests per 15 minutes for regular users
+    skip: (req) => {
+      const header = req.headers.authorization;
+      if (header && header.startsWith("Bearer ")) {
+        const token = header.slice(7);
+        const payload = verifyToken(token);
+        if (payload && payload.rol === "admin") {
+          return true; // Skip rate limit for admin users
+        }
+      }
+      return false;
+    },
   })
 );
 
